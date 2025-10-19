@@ -1,0 +1,67 @@
+/* kleurenpalet pti #555555 #d7ad01*/
+*{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-decoration: none;
+}
+
+
+.header {     
+    width: 100vh;              
+    height: 80px;             
+    background-color: #555555; 
+    display: flex;            
+    align-items: center;      
+    padding-left: 20px;       
+}
+
+/* Logo-container links boven */
+.logo_container {  
+    top: 0;              
+    left: 0;             
+    padding: 10px;       
+}
+
+/* Logo-afbeelding */
+.logo_container img {
+    height: 60px;        
+    width: auto;         
+    display: block;      
+}
+
+.h-titel {   
+    margin-left: 100px;
+}
+.h-titel a {
+    color: #d7ad01;
+    text-decoration: none;
+}
+.h-titel h2 {
+    font-size: 50px;
+    font-weight: bold;
+}
+
+.footer{
+    background-color: #555555;
+    position: fixed;
+    bottom: 0;
+    width: 100vh;
+    text-align: center;
+    color: #d7ad01;
+}
+
+.banner{
+    width: 100vh;
+    height: 300px;
+    background-color: #d7ad01;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.banner-img{
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}

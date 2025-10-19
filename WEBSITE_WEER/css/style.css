@@ -1,0 +1,51 @@
+/* kleurenpalet pti #555555 #d7ad01*/
+
+.header{
+    background-color: #555555;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+}
+
+.logo_container{
+    height: 60px;
+    width: auto;
+}
+
+.logo_container img{
+    height: 60px;
+    width: auto;
+    display: block;
+}
+
+.h-titel{
+    margin-left: 100px;
+}
+
+.h-titel a{
+    color: #d7ad01;
+    text-decoration: none;
+}
+
+.h-titel h2{
+    font-size: 40px;
+    font-weight: bold;
+}
+
+.banner{
+    top: 80px;
+    width: 100%;
+    height: 500px;
+    position: static;
+}
+
+.banner-img{
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+}
