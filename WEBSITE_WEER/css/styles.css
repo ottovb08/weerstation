@@ -2,66 +2,120 @@
 *{
     margin: 0;
     padding: 0;
-    list-style: none;
-    text-decoration: none;
 }
 
-
-.header {     
-    width: 100vh;              
-    height: 80px;             
-    background-color: #555555; 
-    display: flex;            
-    align-items: center;      
-    padding-left: 20px;       
+body{
+    font-family: 'Courier New', Courier, monospace;
 }
 
-/* Logo-container links boven */
-.logo_container {  
-    top: 0;              
-    left: 0;             
-    padding: 10px;       
-}
-
-/* Logo-afbeelding */
-.logo_container img {
-    height: 60px;        
-    width: auto;         
-    display: block;      
-}
-
-.h-titel {   
-    margin-left: 100px;
-}
-.h-titel a {
-    color: #d7ad01;
-    text-decoration: none;
-}
-.h-titel h2 {
-    font-size: 50px;
-    font-weight: bold;
-}
-
-.footer{
+header{
+    width: 100%;
+    height: 80px;
     background-color: #555555;
     position: fixed;
-    bottom: 0;
-    width: 100vh;
-    text-align: center;
+}
+
+header::after{
+    content:"";
+    display: table;
+    clear: both;
+}
+
+.wrapper{
+    width: 90%;
+    margin: 0 auto;
+}
+
+
+.logo{
+    height: 80px;
+    width: auto;
+    line-height: 80px;
+    float: left;
+}
+
+.logo img{
+    height: 60px;
+    width: auto;
+    vertical-align: middle;
+}
+
+nav{
+    float: right;
+    line-height:80px;
+}
+
+nav a{
+    text-decoration: none;
+    padding: 0 20px;
     color: #d7ad01;
+    font-size: 30px;
+    display: inline-block;
+}
+
+nav a:hover{
+    background:#d7ad01;
+    color: #555555;
 }
 
 .banner{
-    width: 100vh;
-    height: 300px;
-    background-color: #d7ad01;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background-image: url(/WEBSITE_WEER/assets/img/banner_index.jpg);
+    background-size:cover;
+    background-position: center center;
+    top: 90px;
+    height: 100vh;
+    position: fixed;
+    width: 100%;
 }
 
-.banner-img{
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+.banner::after{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: black;
+    opacity: .9;
+    z-index: -1;
+}
+
+.banner h2{
+    padding-top: 8%;
+    font-size: 80px;
+    text-align: center;
+    color: #d7ad01;
+    opacity: 1;
+} 
+
+.content-I{
+    width: 100%;
+    height: auto;
+    position: relative;
+    background: #555555;
+    color: #d7ad01;
+    top: 800px;
+    padding-bottom: 2vh;
+}
+
+.tekst-I{
+    margin:2vh;
+}
+
+.tekst-I ul{
+    margin-left: 3vh;
+}
+
+.tekst-I h2{
+    text-align: center;
+}
+
+.footerI{
+    background: #555555;
+    color: #d7ad01;
+    text-align: center;
+    padding: 20px 0;
+    position: relative;
+    margin-top: 87vh;
 }
