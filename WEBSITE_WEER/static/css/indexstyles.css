@@ -61,7 +61,7 @@ nav a:hover{
 }
 
 .banner{
-    background-image: url(/static/img/banner_index.jpg);
+    background-image: url(/WEBSITE_WEER/static/img/banner_index.jpg);
     background-size:cover;
     background-position: center center;
     top: 90px;
