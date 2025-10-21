@@ -1,4 +1,4 @@
-/* kleurenpalet pti #555555 #d7ad01*/
+/* kleurenpalet pti #555555 #d6af00*/
 
 /*--HEADER--*/
 .header{
@@ -29,7 +29,7 @@
 }
 
 .h-titel a{
-    color: #d7ad01;
+    color: #d6af00;
     text-decoration: none;
 }
 
@@ -52,7 +52,7 @@
 }
 
 .footer h3{
-    color: #d7ad01;
+    color: #d6af00;
     font-size: 20px;
     font-weight: bold;
 }
@@ -80,7 +80,7 @@
 }
 
 .banner_home h2{
-    color: #d7ad01;
+    color: #d6af00;
     font-size: 60px;
     font-weight: bold;
     padding-top: 8%;
