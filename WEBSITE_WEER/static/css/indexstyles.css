@@ -1,4 +1,4 @@
-/* kleurenpalet pti #555555 #d7ad01*/
+/* kleurenpalet pti #555555 #d6af00*/
 *{
     margin: 0;
     padding: 0;
@@ -50,13 +50,13 @@ nav{
 nav a{
     text-decoration: none;
     padding: 0 20px;
-    color: #d7ad01;
+    color: #d6af00;
     font-size: 30px;
     display: inline-block;
 }
 
 nav a:hover{
-    background:#d7ad01;
+    background: #d6af00;
     color: #555555;
 }
 
@@ -87,7 +87,7 @@ nav a:hover{
     padding-top: 8%;
     font-size: 80px;
     text-align: center;
-    color: #d7ad01;
+    color: #d6af00;
     opacity: 1;
 } 
 
@@ -96,7 +96,7 @@ nav a:hover{
     height: auto;
     position: relative;
     background: #555555;
-    color: #d7ad01;
+    color: #d6af00;
     top: 80vh;
     padding-bottom: 2vh;
 }
