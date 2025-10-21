@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weerstation Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { background:#0f1720; color:#f8fafc; font-family:Arial; text-align:center; }
+.card { background:#111827; display:inline-block; margin:8px; padding:12px; border-radius:10px; width:340px; }
+.value { font-size:1.3rem; color:#fef3c7; }
+canvas { background:#0b1220; border-radius:8px; }
+</style>
+</head>
+<body>
+<h2>🌦️ Weerstation Demo (PC simulatie)</h2>
+
+<div class="card">
+  <div>Temperatuur (°C)</div>
+  <div id="t_val" class="value">--</div>
+  <canvas id="chartTemp"></canvas>
+</div>
+
+<div class="card">
+  <div>Luchtdruk (mmHg)</div>
+  <div id="p_val" class="value">--</div>
+  <canvas id="chartPress"></canvas>
+</div>
+
+<div class="card">
+  <div>Windsnelheid (km/u)</div>
+  <div id="w_val" class="value">--</div>
+  <canvas id="chartWind"></canvas>
+</div>
+
+<div class="card">
+  <div>Windrichting</div>
+  <div id="dir_text" class="value">--</div>
+</div>
+
+<script>
+const maxPoints = 30;
+function createChart(ctx, label) {
+  return new Chart(ctx, {
+    type: 'line',
+    data: { labels: Array(maxPoints).fill(''), datasets: [{label: label, data: Array(maxPoints).fill(null), tension:0.3, borderColor:'#fef3c7', pointRadius:0}]},
+    options: {animation:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{ticks:{color:'#cbd5e1'}}}}
+  });
+}
+
+const chT = createChart(document.getElementById('chartTemp').getContext('2d'), 'Temperatuur');
+const chP = createChart(document.getElementById('chartPress').getContext('2d'), 'Luchtdruk');
+const chW = createChart(document.getElementById('chartWind').getContext('2d'), 'Windsnelheid');
+
+function pushData(chart, val){
+  chart.data.labels.push('');
+  chart.data.labels.shift();
+  chart.data.datasets[0].data.push(val);
+  chart.data.datasets[0].data.shift();
+  chart.update();
+}
+
+async function update(){
+  try {
+    const res = await fetch('/data');
+    const d = await res.json();
+
+    document.getElementById('t_val').innerText = d.temp.toFixed(2);
+    document.getElementById('p_val').innerText = d.pressure.toFixed(2);
+    document.getElementById('w_val').innerText = d.wind_speed.toFixed(2);
+    document.getElementById('dir_text').innerText = d.wind_dir;
+
+    pushData(chT, d.temp);
+    pushData(chP, d.pressure);
+    pushData(chW, d.wind_speed);
+  } catch(e){
+    console.log("update error", e);
+  }
+}
+
+setInterval(update, 2000);
+update();
+</script>
+</body>
+</html>
