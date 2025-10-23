@@ -12,3 +12,7 @@ zijn data doorsturen naar onze NAS. Die op zijn beurt een website runt met Flask
   <li>windrichting</li>
   <li>uv-index</li>
 </ul>
+<p>De raspberry pico verzamelt deze data en verstuurd die dan via de wifi naar onze NAS</p>
+<br>
+<h3>NAS</h3>
+<p>Voor onze NAS gebruiken we een Raspberry Pi 5 en een SSD van 25O GB met OpenMediaVault. Op deze NAS wordt ook een FLASK server gerunt die onze website host. Op deze website kun je de gegevens van het moment zelf bekijken en weken/maanden/jaren terugkijken in grafieken.</p>
