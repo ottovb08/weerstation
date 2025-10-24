@@ -5,21 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project-Weerstation-6ICW</title>
-    <link rel="stylesheet" href="/WEBSITE_WEER/static/css/indexstyles.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/indexstyles.css')}}">
 </head>
 
 <body>
     <div class="container">
         <header>
             <div class="logo">
-                <a href="/WEBSITE_WEER/templates/index.html">
-                    <img src="/WEBSITE_WEER/static/img/logo.png" alt="logo">
+                <a href="{{url_for('home')}}">
+                    <img src="{{url_for('static', filename='img/logo.png')}}" alt="logo">
                 </a>
             </div>
             <nav>
-                <a href="/WEBSITE_WEER/templates/contact.html">Contact</a>
-                <a href="/WEBSITE_WEER/templates/statistiek.html">Statistiek</a>
-                <a href="/WEBSITE_WEER/templates/weer.html">Weer</a>
+                <a href="{{url_for('weer')}}">Weer</a>
+                <a href="{{url_for('statistiek')}}">Statistiek</a>
+                <a href="{{url_for('contact')}}">Contact</a>
             </nav>
         </header>
 
