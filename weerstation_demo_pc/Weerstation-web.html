@@ -1,113 +1,74 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="nl">
 <head>
-<meta charset="utf-8">
-<title>Weerstation Pico - Live</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTI Weerstation</title>
 <style>
-body { font-family: Arial, sans-serif; background:#0f1720; color:#f8fafc; text-align:center; }
-.header { margin: 8px; }
-.card { background:#111827; display:inline-block; padding:12px; margin:8px; border-radius:8px; width:340px; }
-.small { font-size:0.9rem; color:#9ca3af; }
-canvas { background:#0b1220; border-radius:6px; }
-.value { font-size:1.2rem; font-weight:700; color:#fef3c7; }
+    body {
+        font-family: 'Courier New', monospace;
+        background: linear-gradient(to bottom, #555555, #222);
+        color: #d6af00;
+        margin: 0;
+        text-align: center;
+    }
+    header {
+        background-color: #555555;
+        padding: 10px;
+    }
+    h1 {
+        margin: 0;
+        color: #d6af00;
+    }
+    .data-box {
+        background: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        width: 80%;
+        margin: 20px auto;
+        padding: 15px;
+        box-shadow: 0 0 15px #d6af00;
+    }
+    .data-item {
+        font-size: 1.2em;
+        margin: 8px 0;
+    }
+    #kompas {
+        position: relative;
+        margin: 20px auto;
+        width: 150px;
+        height: 150px;
+        border: 5px solid #d6af00;
+        border-radius: 50%;
+    }
+    #pijl {
+        position: absolute;
+        width: 4px;
+        height: 60px;
+        background-color: #d6af00;
+        top: 25px;
+        left: 73px;
+        transform-origin: bottom center;
+    }
+    footer {
+        background-color: #555555;
+        color: #d6af00;
+        padding: 10px;
+        margin-top: 30px;
+    }
 </style>
 </head>
 <body>
-<h1 class="header">🌤️ Weerstation (Pico WH)</h1>
+<header><h1>🌦️ PTI Weerstation</h1></header>
 
-<div class="card">
-  <div class="small">Temperatuur (BMP280)</div>
-  <div id="t_val" class="value">-- °C</div>
-  <canvas id="chartTemp"></canvas>
+<div class="data-box">
+    <div class="data-item">🌡️ Temperatuur: {temp:.2f} °C</div>
+    <div class="data-item">📈 Luchtdruk: {druk:.2f} hPa</div>
+    <div class="data-item">💨 Windsnelheid: {wind:.2f} km/u</div>
+    <div class="data-item">🧭 Windrichting: {richting} ({hoek:.0f}°)</div>
 </div>
 
-<div class="card">
-  <div class="small">Luchtdruk</div>
-  <div id="p_val" class="value">-- mmHg</div>
-  <canvas id="chartPress"></canvas>
-</div>
+<div id="kompas"><div id="pijl"></div></div>
 
-<div class="card">
-  <div class="small">Windsnelheid</div>
-  <div id="w_val" class="value">-- km/u</div>
-  <canvas id="chartWind"></canvas>
-</div>
-
-<div class="card">
-  <div class="small">Windrichting</div>
-  <div id="dir_text" class="value">--</div>
-  <div class="small" id="dir_deg">-- °</div>
-</div>
-
-<div class="card" style="width:700px;">
-  <div class="small">DS18B20 Temperatuursensoren</div>
-  <div id="ds_text" class="value">-- / --</div>
-</div>
-
-<script>
-// Chart.js setup
-const maxPoints = 30;
-function createChart(ctx, label, unit) {
-  return new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array(maxPoints).fill(''),
-      datasets: [{
-        label: label,
-        data: Array(maxPoints).fill(null),
-        tension: 0.3,
-        pointRadius: 0
-      }]
-    },
-    options: {
-      animation: false,
-      plugins: {legend:{display:false}},
-      scales: {
-        x: { display: false },
-        y: { ticks:{color:'#cbd5e1'} }
-      }
-    }
-  });
-}
-
-const chT = createChart(document.getElementById('chartTemp').getContext('2d'), 'Temperatuur (°C)', '°C');
-const chP = createChart(document.getElementById('chartPress').getContext('2d'), 'Druk (mmHg)', 'mmHg');
-const chW = createChart(document.getElementById('chartWind').getContext('2d'), 'Windsnelheid (km/u)', 'km/u');
-
-function pushPoint(chart, val) {
-  chart.data.labels.push('');
-  chart.data.labels.shift();
-  chart.data.datasets[0].data.push(val);
-  chart.data.datasets[0].data.shift();
-  chart.update();
-}
-
-async function update() {
-  try {
-    const resp = await fetch('/data');
-    const obj = await resp.json();
-
-    // display numeric values
-    document.getElementById('t_val').innerText = obj.temp_bmp !== null ? obj.temp_bmp.toFixed(2) + ' °C' : '--';
-    document.getElementById('p_val').innerText = obj.pressure !== null ? obj.pressure.toFixed(2) + ' mmHg' : '--';
-    document.getElementById('w_val').innerText = obj.wind_speed !== null ? obj.wind_speed.toFixed(2) + ' km/u' : '--';
-    document.getElementById('dir_text').innerText = obj.dir_name || '--';
-    document.getElementById('dir_deg').innerText = obj.dir_deg !== null ? obj.dir_deg.toFixed(0) + ' °' : '--';
-    document.getElementById('ds_text').innerText = (obj.ds1!==null?obj.ds1.toFixed(2):'--') + ' / ' + (obj.ds2!==null?obj.ds2.toFixed(2):'--');
-
-    // update charts
-    pushPoint(chT, obj.temp_bmp);
-    pushPoint(chP, obj.pressure);
-    pushPoint(chW, obj.wind_speed);
-  } catch (e) {
-    console.log('fetch error', e);
-  }
-}
-
-// initial poll + interval
-update();
-setInterval(update, 5000);
-</script>
+<footer>© 2025 PTI Weerstation Project</footer>
 </body>
 </html>
