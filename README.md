@@ -5,11 +5,12 @@ zijn data doorsturen naar onze NAS. Die op zijn beurt een website runt met Flask
 <h3>Weerstation</h3>
 <p>Ons weerstation heeft een raspberry pico als microcontroller. We meten verschillende waarden:</p>
 <ul>
-  <li>temperatuur</li>
-  <li>luchtvochtigheid</li>
+  <li>temperatuur (BMP280)</li>
+  <li>luchtdruk (BMP280)</li>
+  <li>luchtvochtigheid (BME280)</li>
+  <li>windsnelheid (anemometer)</li>
+  <li>windrichting (windroos)</li>
   <li>neerslag</li>
-  <li>windsnelheid</li>
-  <li>windrichting</li>
   <li>uv-index</li>
 </ul>
 <p>De raspberry pico verzamelt deze data en verstuurd die dan via de wifi naar onze NAS</p>
