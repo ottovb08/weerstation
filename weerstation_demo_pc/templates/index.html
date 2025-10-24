@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌿 Live Weerstation Demo</title>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom, #a8e063, #56ab2f);
+    color: #fff;
+    text-align: center;
+}
+
+header {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    font-size: 2em;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    backdrop-filter: blur(6px);
+}
+
+h2 { margin-top: 0; }
+
+.data-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.card {
+    background: rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.value {
+    font-size: 1.5rem;
+    margin: 10px 0;
+}
+
+canvas { background:#0b1220; border-radius:8px; }
+</style>
+</head>
+<body>
+
+<header>🌦️ Live Weerstation Demo</header>
+
+<div class="container">
+    <h2>Actuele metingen</h2>
+    <div class="data-box">
+        <div class="card">
+            <h3>Temperatuur</h3>
+            <div class="value" id="temp">-- °C</div>
+            <canvas id="chartTemp" height="100"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Luchtdruk</h3>
+            <div class="value" id="press">-- mmHg</div>
+            <canvas id="chartPress" height="100"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Windsnelheid</h3>
+            <div class="value" id="wind">-- km/u</div>
+            <canvas id="chartWind" height="100"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Windrichting</h3>
+            <div class="value" id="dir">--</div>
+        </div>
+    </div>
+</div>
+
+<script>
+const maxPoints = 30;
+
+// Functie om chart aan te maken
+function createChart(ctx, label, color='#fef3c7'){
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array(maxPoints).fill(''),
+            datasets: [{
+                label: label,
+                data: Array(maxPoints).fill(null),
+                tension: 0.3,
+                borderColor: color,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            animation: false,
+            plugins: {legend:{display:false}},
+            scales: {x:{display:false}, y:{ticks:{color:'#cbd5e1'}}}
+        }
+    });
+}
+
+const chTemp = createChart(document.getElementById('chartTemp').getContext('2d'), 'Temp');
+const chPress = createChart(document.getElementById('chartPress').getContext('2d'), 'Pressure');
+const chWind = createChart(document.getElementById('chartWind').getContext('2d'), 'Wind');
+
+function pushData(chart, val){
+    chart.data.labels.push('');
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.push(val);
+    chart.data.datasets[0].data.shift();
+    chart.update();
+}
+
+async function updateData(){
+    try{
+        const res = await fetch('/data');
+        const d = await res.json();
+
+        document.getElementById('temp').textContent = d.temperature.toFixed(2) + " °C";
+        document.getElementById('press').textContent = d.pressure.toFixed(2) + " mmHg";
+        document.getElementById('wind').textContent = d.wind_speed.toFixed(2) + " km/u";
+        document.getElementById('dir').textContent = d.wind_direction;
+
+        pushData(chTemp, d.temperature);
+        pushData(chPress, d.pressure);
+        pushData(chWind, d.wind_speed);
+    } catch(e){ console.log(e); }
+}
+
+setInterval(updateData, 2000);
+updateData();
+</script>
+
+</body>
+</html>
