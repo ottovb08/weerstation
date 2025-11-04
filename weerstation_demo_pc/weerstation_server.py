@@ -1,11 +1,28 @@
-from flask import Flask, render_template_string, request, jsonify
-import time
+from flask import Flask, request, render_template_string, jsonify
+from datetime import datetime
+from collections import deque
 
 app = Flask(__name__)
 
-data_log = []
+data_log = deque(maxlen=50)  # bewaar de laatste 50 metingen
 
-HTML = """
+@app.route("/update", methods=["POST"])
+def update():
+    data = request.json
+    data["tijd"] = datetime.now().strftime("%H:%M:%S")
+    data_log.append(data)
+    print("Ontvangen:", data)
+    return jsonify({"status": "ok"})
+
+@app.route("/")
+def index():
+    if not data_log:
+        return "Nog geen data ontvangen"
+    laatste = data_log[-1]
+    temps = [d["temp_bmp"] for d in data_log]
+    tijden = [d["tijd"] for d in data_log]
+
+    html = f"""
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -80,38 +97,7 @@ nav a:hover{background:#d6af00;color:#555555;}
 #kompas{margin:20px auto;width:150px;height:150px;border:5px solid #d6af00;border-radius:50%;position:relative;}
 #pijl{width:4px;height:60px;background:#d6af00;position:absolute;top:25px;left:73px;transform-origin:bottom center;}
 """
-
-@app.route("/")
-def index():
-    if data_log:
-        d = data_log[-1]
-        temps = [d["bme_temp"] for d in data_log[-10:]]
-        labels = [i for i in range(len(temps))]
-        return render_template_string(
-            HTML,
-            style=style,
-            temp=d["bme_temp"],
-            hum=d["hum"],
-            druk=d["druk"],
-            wind=d["wind"],
-            richting=d["richting"],
-            hoek=d["hoek"],
-            t1=d["ds18b20_1"],
-            t2=d["ds18b20_2"],
-            temps=temps,
-            labels=labels
-        )
-    else:
-        return "Nog geen data ontvangen."
-
-@app.route("/update", methods=["POST"])
-def update():
-    content = request.get_json()
-    content["tijd"] = time.time()
-    data_log.append(content)
-    if len(data_log) > 100:
-        data_log.pop(0)
-    return jsonify({"status": "OK"})
+    return html
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
