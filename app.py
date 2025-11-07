@@ -3,11 +3,12 @@ import time
 
 app = Flask(__name__)
 
+# Opslag voor inkomende data
 data_log = []
 
-# ----------------------------------
-# HTML-template (inclusief CSS + JS)
-# ----------------------------------
+# --------------------------
+# HTML template
+# --------------------------
 HTML = """
 <!DOCTYPE html>
 <html lang="nl">
@@ -17,46 +18,21 @@ HTML = """
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <meta http-equiv="refresh" content="2">
 <style>
-/* kleurenpalet pti #555555 #d6af00 */
 *{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:'Courier New',monospace;
-  background:#555555;
-  color:#d6af00;
-}
-header{
-  width:100%;height:80px;background:#555555;position:fixed;top:0;left:0;
-  display:flex;justify-content:center;align-items:center;z-index:10;
-}
+body{font-family:'Courier New',monospace;background:#555555;color:#d6af00;}
+header{width:100%;height:80px;background:#555555;position:fixed;top:0;left:0;display:flex;justify-content:center;align-items:center;z-index:10;}
 .wrapper{width:90%;display:flex;justify-content:space-between;align-items:center;}
 .logo img{height:60px;}
-nav a{
-  text-decoration:none;padding:0 15px;color:#d6af00;font-size:22px;
-}
+nav a{text-decoration:none;padding:0 15px;color:#d6af00;font-size:22px;}
 nav a:hover{background:#d6af00;color:#555555;border-radius:8px;}
-.banner{
-  background:#222;height:200px;text-align:center;
-  padding-top:120px;font-size:28px;
-}
+.banner{background:#222;height:200px;text-align:center;padding-top:120px;font-size:28px;}
 .content-I{padding:30px;text-align:center;}
 ul{list-style:none;padding:0;margin:20px auto;max-width:400px;text-align:left;}
 li{margin:6px 0;font-size:18px;}
-#kompas{
-  margin:30px auto;width:150px;height:150px;border:5px solid #d6af00;
-  border-radius:50%;position:relative;
-}
-#pijl{
-  width:4px;height:60px;background:#d6af00;
-  position:absolute;top:25px;left:73px;
-  transform-origin:bottom center;
-  transform:rotate({{ hoek }}deg);
-  transition:transform 0.5s ease;
-}
+#kompas{margin:30px auto;width:150px;height:150px;border:5px solid #d6af00;border-radius:50%;position:relative;}
+#pijl{width:4px;height:60px;background:#d6af00;position:absolute;top:25px;left:73px;transform-origin:bottom center;transform:rotate({{ hoek }}deg);transition:transform 0.5s ease;}
 canvas{margin-top:20px;max-width:400px;width:90%;}
-footer{
-  margin-top:40px;padding:10px;background:#555555;
-  color:#d6af00;text-align:center;font-size:14px;
-}
+footer{margin-top:40px;padding:10px;background:#555555;color:#d6af00;text-align:center;font-size:14px;}
 </style>
 </head>
 <body>
@@ -78,7 +54,7 @@ footer{
   {% if has_data %}
   <ul>
     <li>🌡️ BME Temp: {{ temp }} °C</li>
-    <li>💧 Luchtvochtigheid: {{ hum }} %</li>
+    <li>💧 Luchtvochtigheid: {{ hum }}</li>
     <li>📈 Luchtdruk: {{ druk }} hPa</li>
     <li>💨 Windsnelheid: {{ wind }} km/u</li>
     <li>🧭 Richting: {{ richting }} ({{ hoek }}°)</li>
@@ -102,7 +78,7 @@ new Chart(ctx, {
   data: {
     labels: {{ labels }},
     datasets: [{
-      label: 'Temperatuur (°C)',
+      label: 'BME Temp (°C)',
       data: {{ temps }},
       borderColor: '#d6af00',
       tension: 0.3
@@ -119,29 +95,29 @@ new Chart(ctx, {
 </html>
 """
 
-# ----------------------------------
+# --------------------------
 # Routes
-# ----------------------------------
+# --------------------------
 @app.route("/")
 def index():
     if data_log:
         d = data_log[-1]
 
-        # gebruik veilige .get() zodat ontbrekende velden geen crash veroorzaken
-        temps = [x.get("bme_temp", x.get("temp", 0)) for x in data_log[-10:]]
+        # Laatste 10 temperaturen voor grafiek
+        temps = [x.get("temp_bmp", 0) for x in data_log[-10:]]
         labels = list(range(len(temps)))
 
         return render_template_string(
             HTML,
             has_data=True,
-            temp=d.get("bme_temp", d.get("temp", "-")),
-            hum=d.get("hum", "-"),
+            temp=d.get("temp_bmp", "-"),
+            hum=d.get("hum", "-"),  # Pico stuurt nu nog geen hum, optioneel
             druk=d.get("druk", "-"),
             wind=d.get("wind", "-"),
             richting=d.get("richting", "-"),
             hoek=d.get("hoek", 0),
-            t1=d.get("ds18b20_1", "-"),
-            t2=d.get("ds18b20_2", "-"),
+            t1=d.get("temp1", "-"),
+            t2=d.get("temp2", "-"),
             temps=temps,
             labels=labels
         )
@@ -160,8 +136,8 @@ def update():
     print("Nieuwe data ontvangen:", content)
     return jsonify({"status": "OK"})
 
-# ----------------------------------
-# Start Flask-server
-# ----------------------------------
+# --------------------------
+# Start server
+# --------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
