@@ -1,18 +1,18 @@
 from flask import Flask, render_template_string, request, jsonify
-import time, os, datetime
+import time
+import json
+import os
 
 app = Flask(__name__)
-
 data_log = []
-DATA_FOLDER = "data"
 
-# Maak de map 'data' aan als die nog niet bestaat
-if not os.path.exists(DATA_FOLDER):
-    os.makedirs(DATA_FOLDER)
+DATA_DIR = "data"
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
-# ----------------------------------
-# HTML-template (inclusief CSS + JS)
-# ----------------------------------
+# ---------------------------
+# HTML + CSS + JavaScript
+# ---------------------------
 HTML = """
 <!DOCTYPE html>
 <html lang="nl">
@@ -20,88 +20,108 @@ HTML = """
 <meta charset="UTF-8">
 <title>PTI Weerstation</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<meta http-equiv="refresh" content="1.5">
+<script src="https://cdn.jsdelivr.net/npm/justgage"></script>
+<script src="https://cdn.jsdelivr.net/npm/raphael"></script>
+<meta http-equiv="refresh" content="4">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:'Courier New',monospace;
-  background:#555555;
-  color:#d6af00;
+body {
+  font-family: 'Courier New', monospace;
+  background: #555555;
+  color: #d6af00;
+  text-align: center;
+  margin: 0;
+  padding: 0;
 }
-header{
-  width:100%;height:80px;background:#555555;position:fixed;top:0;left:0;
-  display:flex;justify-content:center;align-items:center;z-index:10;
+header {
+  background: #222;
+  padding: 10px 0;
+  font-size: 28px;
 }
-.wrapper{width:90%;display:flex;justify-content:space-between;align-items:center;}
-.logo img{height:60px;}
-nav a{
-  text-decoration:none;padding:0 15px;color:#d6af00;font-size:22px;
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px auto;
+  max-width: 400px;
+  text-align: left;
 }
-nav a:hover{background:#d6af00;color:#555555;border-radius:8px;}
-.banner{
-  background:#222;height:200px;text-align:center;
-  padding-top:120px;font-size:28px;
+li { margin: 6px 0; font-size: 18px; }
+canvas {
+  margin: 20px auto;
+  max-width: 600px;
+  width: 90%;
+  display: block;
 }
-.content-I{padding:30px;text-align:center;}
-ul{list-style:none;padding:0;margin:20px auto;max-width:400px;text-align:left;}
-li{margin:6px 0;font-size:18px;}
-#kompas{
-  margin:30px auto;width:150px;height:150px;border:5px solid #d6af00;
-  border-radius:50%;position:relative;
+#gauge {
+  width: 300px;
+  height: 160px;
+  margin: 20px auto;
 }
-#pijl{
-  width:4px;height:60px;background:#d6af00;
-  position:absolute;top:25px;left:73px;
-  transform-origin:bottom center;
-  transform:rotate({{ hoek }}deg);
-  transition:transform 0.5s ease;
+footer {
+  margin-top: 30px;
+  padding: 10px;
+  background: #333;
+  color: #d6af00;
+  font-size: 14px;
 }
-canvas{margin-top:20px;max-width:400px;width:90%;}
-footer{
-  margin-top:40px;padding:10px;background:#555555;
-  color:#d6af00;text-align:center;font-size:14px;
+#kompas {
+  margin: 30px auto;
+  width: 150px;
+  height: 150px;
+  border: 5px solid #d6af00;
+  border-radius: 50%;
+  position: relative;
+}
+#pijl {
+  width: 4px;
+  height: 60px;
+  background: #d6af00;
+  position: absolute;
+  top: 25px;
+  left: 73px;
+  transform-origin: bottom center;
+  transform: rotate({{ hoek }}deg);
+  transition: transform 0.5s ease;
 }
 </style>
 </head>
 <body>
-<header>
-  <div class="wrapper">
-    <div class="logo"><img src="https://via.placeholder.com/100x60.png?text=PTI" alt="logo"></div>
-    <nav>
-      <a href="#">Home</a>
-      <a href="#">Weerdata</a>
-      <a href="#">Over</a>
-    </nav>
-  </div>
-</header>
+<header>🌦️ PTI Weerstation</header>
 
-<div class="banner"><h2>PTI Weerstation</h2></div>
+{% if has_data %}
+<ul>
+  <li>🌡️ BME Temp: {{ temp }} °C</li>
+  <li>💧 Luchtvochtigheid: {{ hum }} %</li>
+  <li>📈 Luchtdruk: {{ druk }} hPa</li>
+  <li>💨 Windsnelheid: {{ wind }} km/u</li>
+  <li>🧭 Richting: {{ richting }} ({{ hoek }}°)</li>
+  <li>🌿 Groene dakbedekking: {{ t1 }} °C</li>
+  <li>🏠 Gewone dakbedekking: {{ t2 }} °C</li>
+</ul>
 
-<div class="content-I">
-  <h2>Live Data</h2>
-  {% if has_data %}
-  <ul>
-    <li>🌡️ BME Temp: {{ temp }} °C</li>
-    <li>💧 Luchtvochtigheid: {{ hum }} %</li>
-    <li>📈 Luchtdruk: {{ druk }} hPa</li>
-    <li>💨 Windsnelheid: {{ wind }} km/u</li>
-    <li>🧭 Richting: {{ richting }} ({{ hoek }}°)</li>
-    <li>🌿 Groene dakbedekking: {{ t1 }} °C</li>
-    <li>🏠 Gewone dakbedekking: {{ t2 }} °C</li>
-  </ul>
-  <canvas id="grafiek" height="120"></canvas>
-  <div id="kompas"><div id="pijl"></div></div>
-  {% else %}
-  <p>Nog geen data ontvangen...</p>
-  {% endif %}
-</div>
+<h3>📊 Temperatuur</h3>
+<canvas id="tempChart"></canvas>
+
+<h3>💧 Luchtvochtigheid</h3>
+<canvas id="humChart"></canvas>
+
+<h3>📈 Luchtdruk</h3>
+<canvas id="drukChart"></canvas>
+
+<h3>💨 Windsnelheid</h3>
+<div id="gauge"></div>
+
+<div id="kompas"><div id="pijl"></div></div>
+
+{% else %}
+<p>⏳ Nog geen data ontvangen...</p>
+{% endif %}
 
 <footer>© 2025 PTI Weerstation Project</footer>
 
 <script>
 {% if has_data %}
-const ctx = document.getElementById('grafiek').getContext('2d');
-new Chart(ctx, {
+// ========== Chart.js: temperatuur ==========
+new Chart(document.getElementById('tempChart'), {
   type: 'line',
   data: {
     labels: {{ labels }},
@@ -109,13 +129,56 @@ new Chart(ctx, {
       label: 'Temperatuur (°C)',
       data: {{ temps }},
       borderColor: '#d6af00',
-      tension: 0.3
+      tension: 0.3,
+      fill: false
     }]
   },
-  options: {
-    scales: {y: {beginAtZero: false}},
-    plugins: {legend: {display: false}}
-  }
+  options: { scales: { y: { beginAtZero: false } } }
+});
+
+// ========== Chart.js: luchtvochtigheid ==========
+new Chart(document.getElementById('humChart'), {
+  type: 'line',
+  data: {
+    labels: {{ labels }},
+    datasets: [{
+      label: 'Luchtvochtigheid (%)',
+      data: {{ hums }},
+      borderColor: '#00ffff',
+      tension: 0.3,
+      fill: false
+    }]
+  },
+  options: { scales: { y: { beginAtZero: true, max: 100 } } }
+});
+
+// ========== Chart.js: luchtdruk ==========
+new Chart(document.getElementById('drukChart'), {
+  type: 'line',
+  data: {
+    labels: {{ labels }},
+    datasets: [{
+      label: 'Luchtdruk (hPa)',
+      data: {{ drukken }},
+      borderColor: '#ffaa00',
+      tension: 0.3,
+      fill: false
+    }]
+  },
+  options: { scales: { y: { beginAtZero: false } } }
+});
+
+// ========== JustGage: Windsnelheid ==========
+var gauge = new JustGage({
+  id: "gauge",
+  value: {{ wind }},
+  min: 0,
+  max: 100,
+  title: "Windsnelheid (km/u)",
+  label: "km/u",
+  pointer: true,
+  gaugeWidthScale: 0.6,
+  levelColors: ["#00ff00", "#ffff00", "#ff0000"]
 });
 {% endif %}
 </script>
@@ -123,19 +186,22 @@ new Chart(ctx, {
 </html>
 """
 
-# ----------------------------------
+# ---------------------------
 # Routes
-# ----------------------------------
+# ---------------------------
 @app.route("/")
 def index():
     if data_log:
         d = data_log[-1]
-        temps = [x.get("bme_temp", x.get("temp", 0)) for x in data_log[-10:]]
+        temps = [x.get("temp", 0) for x in data_log[-20:]]
+        hums = [x.get("hum", 0) for x in data_log[-20:]]
+        drukken = [x.get("druk", 0) for x in data_log[-20:]]
         labels = list(range(len(temps)))
+
         return render_template_string(
             HTML,
             has_data=True,
-            temp=d.get("bme_temp", d.get("temp", "-")),
+            temp=d.get("temp", "-"),
             hum=d.get("hum", "-"),
             druk=d.get("druk", "-"),
             wind=d.get("wind", "-"),
@@ -144,6 +210,8 @@ def index():
             t1=d.get("ds18b20_1", "-"),
             t2=d.get("ds18b20_2", "-"),
             temps=temps,
+            hums=hums,
+            drukken=drukken,
             labels=labels
         )
     else:
@@ -155,29 +223,21 @@ def update():
     if not isinstance(content, dict):
         return jsonify({"status": "error", "message": "Invalid JSON"}), 400
 
-    content["tijd"] = time.time()
+    content["tijd"] = time.strftime("%Y-%m-%d %H:%M:%S")
     data_log.append(content)
-    if len(data_log) > 100:
+    if len(data_log) > 500:
         data_log.pop(0)
 
-    # 📂 Log opslaan in /data/metingen_JJJJ-MM-DD.txt
-    datum = datetime.datetime.now().strftime("%Y-%m-%d")
-    pad = os.path.join(DATA_FOLDER, f"metingen_{datum}.txt")
-
-    with open(pad, "a") as f:
-        tijd = datetime.datetime.now().strftime("%H:%M:%S")
-        regel = (
-            f"{tijd} | Temp={content.get('temp','-')}°C | Druk={content.get('druk','-')}hPa | "
-            f"Wind={content.get('wind','-')}km/u | Richting={content.get('richting','-')}({content.get('hoek','-')}°) | "
-            f"Groene dakbedekking={content.get('ds18b20_1','-')}°C | Gewone dakbedekking={content.get('ds18b20_2','-')}°C\n"
-        )
-        f.write(regel)
+    # Log opslaan in bestand (dagelijks)
+    filename = f"{DATA_DIR}/metingen_{time.strftime('%Y-%m-%d')}.txt"
+    with open(filename, "a") as f:
+        f.write(json.dumps(content) + "\n")
 
     print("Nieuwe data ontvangen:", content)
     return jsonify({"status": "OK"})
 
-# ----------------------------------
+# ---------------------------
 # Start Flask-server
-# ----------------------------------
+# ---------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
