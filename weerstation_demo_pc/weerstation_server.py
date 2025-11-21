@@ -1,18 +1,10 @@
 from flask import Flask, render_template_string, request, jsonify
 import time
-import json
-import os
 
 app = Flask(__name__)
+
 data_log = []
 
-DATA_DIR = "data"
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
-
-# ---------------------------
-# HTML + CSS + JavaScript
-# ---------------------------
 HTML = """
 <!DOCTYPE html>
 <html lang="nl">
@@ -20,224 +12,143 @@ HTML = """
 <meta charset="UTF-8">
 <title>PTI Weerstation</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/justgage"></script>
-<script src="https://cdn.jsdelivr.net/npm/raphael"></script>
-<meta http-equiv="refresh" content="4">
+<meta http-equiv="refresh" content="2">
 <style>
-body {
-  font-family: 'Courier New', monospace;
-  background: #555555;
-  color: #d6af00;
-  text-align: center;
-  margin: 0;
-  padding: 0;
+body{
+  background:#555;
+  color:#d6af00;
+  font-family:Courier New;
+  text-align:center;
 }
-header {
-  background: #222;
-  padding: 10px 0;
-  font-size: 28px;
+canvas{max-width:500px;margin:20px auto;}
+#gauge{
+  width:200px;
+  height:100px;
+  border-radius:200px 200px 0 0;
+  background:#222;
+  margin:20px auto;
+  position:relative;
 }
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 20px auto;
-  max-width: 400px;
-  text-align: left;
-}
-li { margin: 6px 0; font-size: 18px; }
-canvas {
-  margin: 20px auto;
-  max-width: 600px;
-  width: 90%;
-  display: block;
-}
-#gauge {
-  width: 300px;
-  height: 160px;
-  margin: 20px auto;
-}
-footer {
-  margin-top: 30px;
-  padding: 10px;
-  background: #333;
-  color: #d6af00;
-  font-size: 14px;
-}
-#kompas {
-  margin: 30px auto;
-  width: 150px;
-  height: 150px;
-  border: 5px solid #d6af00;
-  border-radius: 50%;
-  position: relative;
-}
-#pijl {
-  width: 4px;
-  height: 60px;
-  background: #d6af00;
-  position: absolute;
-  top: 25px;
-  left: 73px;
-  transform-origin: bottom center;
-  transform: rotate({{ hoek }}deg);
-  transition: transform 0.5s ease;
+#needle{
+  width:4px;
+  height:80px;
+  background:#d6af00;
+  position:absolute;
+  left:98px;
+  top:20px;
+  transform-origin:bottom center;
+  transform:rotate({{ wind_hoek }}deg);
 }
 </style>
 </head>
 <body>
-<header>🌦️ PTI Weerstation</header>
+
+<h1>🌦️ PTI Weerstation</h1>
 
 {% if has_data %}
-<ul>
-  <li>🌡️ BME Temp: {{ temp }} °C</li>
-  <li>💧 Luchtvochtigheid: {{ hum }} %</li>
-  <li>📈 Luchtdruk: {{ druk }} hPa</li>
-  <li>💨 Windsnelheid: {{ wind }} km/u</li>
-  <li>🧭 Richting: {{ richting }} ({{ hoek }}°)</li>
-  <li>🌿 Groene dakbedekking: {{ t1 }} °C</li>
-  <li>🏠 Gewone dakbedekking: {{ t2 }} °C</li>
-</ul>
+<h2>Live gegevens</h2>
+<p>🌡️ Temp: {{ temp }} °C</p>
+<p>💧 Vocht: {{ hum }} %</p>
+<p>📈 Druk: {{ druk }} hPa</p>
+<p>💨 Wind: {{ wind }} km/u</p>
+<p>🧭 Richting: {{ richting }} ({{ hoek }}°)</p>
+<p>🌿 Groene dakbedekking: {{ t1 }} °C</p>
+<p>🏠 Gewone dakbedekking: {{ t2 }} °C</p>
 
-<h3>📊 Temperatuur</h3>
+<!-- Windsnelheid gauge -->
+<div id="gauge">
+    <div id="needle"></div>
+</div>
+
+<!-- Grafieken -->
 <canvas id="tempChart"></canvas>
-
-<h3>💧 Luchtvochtigheid</h3>
 <canvas id="humChart"></canvas>
-
-<h3>📈 Luchtdruk</h3>
 <canvas id="drukChart"></canvas>
-
-<h3>💨 Windsnelheid</h3>
-<div id="gauge"></div>
-
-<div id="kompas"><div id="pijl"></div></div>
-
-{% else %}
-<p>⏳ Nog geen data ontvangen...</p>
-{% endif %}
-
-<footer>© 2025 PTI Weerstation Project</footer>
+<canvas id="windChart"></canvas>
 
 <script>
-{% if has_data %}
-// ========== Chart.js: temperatuur ==========
-new Chart(document.getElementById('tempChart'), {
-  type: 'line',
-  data: {
-    labels: {{ labels }},
-    datasets: [{
-      label: 'Temperatuur (°C)',
-      data: {{ temps }},
-      borderColor: '#d6af00',
-      tension: 0.3,
-      fill: false
-    }]
-  },
-  options: { scales: { y: { beginAtZero: false } } }
+let temps = {{ temps }};
+let hums = {{ hums }};
+let druk = {{ druks }};
+let winds = {{ winds }};
+let labels = {{ labels }};
+
+// Temperatuur
+new Chart(document.getElementById('tempChart').getContext('2d'), {
+  type:'line',
+  data:{ labels:labels, datasets:[{label:'Temp °C', data:temps, borderColor:'#d6af00'}] }
 });
 
-// ========== Chart.js: luchtvochtigheid ==========
-new Chart(document.getElementById('humChart'), {
-  type: 'line',
-  data: {
-    labels: {{ labels }},
-    datasets: [{
-      label: 'Luchtvochtigheid (%)',
-      data: {{ hums }},
-      borderColor: '#00ffff',
-      tension: 0.3,
-      fill: false
-    }]
-  },
-  options: { scales: { y: { beginAtZero: true, max: 100 } } }
+// Vochtigheid
+new Chart(document.getElementById('humChart').getContext('2d'), {
+  type:'line',
+  data:{ labels:labels, datasets:[{label:'Vocht %', data:hums, borderColor:'#00eaff'}] }
 });
 
-// ========== Chart.js: luchtdruk ==========
-new Chart(document.getElementById('drukChart'), {
-  type: 'line',
-  data: {
-    labels: {{ labels }},
-    datasets: [{
-      label: 'Luchtdruk (hPa)',
-      data: {{ drukken }},
-      borderColor: '#ffaa00',
-      tension: 0.3,
-      fill: false
-    }]
-  },
-  options: { scales: { y: { beginAtZero: false } } }
+// Luchtdruk
+new Chart(document.getElementById('drukChart').getContext('2d'), {
+  type:'line',
+  data:{ labels:labels, datasets:[{label:'Druk hPa', data:druk, borderColor:'#ff8800'}] }
 });
 
-// ========== JustGage: Windsnelheid ==========
-var gauge = new JustGage({
-  id: "gauge",
-  value: {{ wind }},
-  min: 0,
-  max: 100,
-  title: "Windsnelheid (km/u)",
-  label: "km/u",
-  pointer: true,
-  gaugeWidthScale: 0.6,
-  levelColors: ["#00ff00", "#ffff00", "#ff0000"]
+// Wind
+new Chart(document.getElementById('windChart').getContext('2d'), {
+  type:'line',
+  data:{ labels:labels, datasets:[{label:'Wind km/u', data:winds, borderColor:'#00ff55'}] }
 });
-{% endif %}
 </script>
+
+{% else %}
+<h2>Nog geen data ontvangen...</h2>
+{% endif %}
 </body>
 </html>
 """
 
-# ---------------------------
-# Routes
-# ---------------------------
 @app.route("/")
 def index():
     if data_log:
         d = data_log[-1]
+
         temps = [x.get("temp", 0) for x in data_log[-20:]]
         hums = [x.get("hum", 0) for x in data_log[-20:]]
-        drukken = [x.get("druk", 0) for x in data_log[-20:]]
+        druks = [x.get("druk", 0) for x in data_log[-20:]]
+        winds = [x.get("wind", 0) for x in data_log[-20:]]
         labels = list(range(len(temps)))
 
         return render_template_string(
             HTML,
             has_data=True,
-            temp=d.get("temp", "-"),
-            hum=d.get("hum", "-"),
-            druk=d.get("druk", "-"),
-            wind=d.get("wind", "-"),
-            richting=d.get("richting", "-"),
-            hoek=d.get("hoek", 0),
-            t1=d.get("ds18b20_1", "-"),
-            t2=d.get("ds18b20_2", "-"),
+            temp=d.get("temp"),
+            hum=d.get("hum"),
+            druk=d.get("druk"),
+            wind=d.get("wind"),
+            richting=d.get("richting"),
+            hoek=d.get("hoek"),
+
+            # nieuwe DS18B20 namen
+            t1=d.get("groene_dakbedekking"),
+            t2=d.get("gewone_dakbedekking"),
+
             temps=temps,
             hums=hums,
-            drukken=drukken,
-            labels=labels
+            druks=druks,
+            winds=winds,
+            labels=labels,
+
+            wind_hoek = d.get("wind",0) * 3  # schaal voor gauge
         )
-    else:
-        return render_template_string(HTML, has_data=False)
+    return render_template_string(HTML, has_data=False)
 
 @app.route("/update", methods=["POST"])
 def update():
     content = request.get_json(force=True)
-    if not isinstance(content, dict):
-        return jsonify({"status": "error", "message": "Invalid JSON"}), 400
-
-    content["tijd"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    content["tijd"] = time.time()
     data_log.append(content)
-    if len(data_log) > 500:
+    if len(data_log) > 300:
         data_log.pop(0)
+    print("Ontvangen:", content)
+    return jsonify({"status":"OK"})
 
-    # Log opslaan in bestand (dagelijks)
-    filename = f"{DATA_DIR}/metingen_{time.strftime('%Y-%m-%d')}.txt"
-    with open(filename, "a") as f:
-        f.write(json.dumps(content) + "\n")
-
-    print("Nieuwe data ontvangen:", content)
-    return jsonify({"status": "OK"})
-
-# ---------------------------
-# Start Flask-server
-# ---------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

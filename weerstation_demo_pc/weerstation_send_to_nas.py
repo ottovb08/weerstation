@@ -99,10 +99,12 @@ while True:
             "wind": round(wind_speed, 2),
             "richting": richting,
             "hoek": hoek,
-            "ds18b20_1": round(groene_temp, 2) if groene_temp is not None else None,
-            "ds18b20_2": round(gewone_temp, 2) if gewone_temp is not None else None
-        }
 
+            # nieuwe namen
+            "groene_dakbedekking": round(groene_temp, 2) if groene_temp is not None else None,
+            "gewone_dakbedekking": round(gewone_temp, 2) if gewone_temp is not None else None
+        }
+        
         # Versturen naar NAS
         try:
             r = urequests.post(SERVER, json=payload)
@@ -114,4 +116,4 @@ while True:
         time.sleep(2)  # Verzendsnelheid
     except Exception as e:
         print("Algemene fout:", e)
-        time.sleep(5)
+        time.sleep(5) 
